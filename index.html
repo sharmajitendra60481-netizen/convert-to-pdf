@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Any File To PDF</title>
+
+<style>
+:root{
+  --red:#dc2626;
+  --bg:#ffffff;
+  --card:#f8fafc;
+  --text:#020617;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#020617;
+    --card:#020617;
+    --text:#f8fafc;
+  }
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:Arial;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  color:var(--text);
+}
+
+.card{
+  background:var(--card);
+  border:2px solid var(--red);
+  box-shadow:0 0 25px rgba(220,38,38,.7);
+  padding:28px;
+  width:380px;
+  border-radius:18px;
+  text-align:center;
+}
+
+h2{color:var(--red);}
+
+input,button{
+  width:100%;
+  margin-top:15px;
+  padding:12px;
+  border-radius:10px;
+  font-size:15px;
+}
+
+input{
+  border:1px solid var(--red);
+  background:transparent;
+  color:var(--text);
+}
+
+button{
+  background:var(--red);
+  border:none;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:hover{opacity:.85;}
+
+#status{
+  margin-top:15px;
+  color:var(--red);
+}
+
+.contacts{
+  margin-top:25px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+
+.contacts a{
+  flex:1;
+  text-decoration:none;
+  background:transparent;
+  border:1px solid var(--red);
+  color:var(--red);
+  padding:10px;
+  border-radius:10px;
+  font-size:13px;
+  transition:.3s;
+}
+
+.contacts a:hover{
+  background:var(--red);
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h2>Universal File → PDF</h2>
+<input type="file" id="file">
+<button onclick="convert()">Convert</button>
+<div id="status"></div>
+
+<div class="contacts">
+  <a href="https://www.instagram.com/dark_god_108/" target="_blank">Instagram</a>
+  <a href="https://www.linkedin.com/in/jitendra-gour-035773316/" target="_blank">LinkedIn</a>
+  <a href="#" onclick="alert('Add your portfolio link here')">Portfolio</a>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/mammoth@1.4.17/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+async function convert(){
+const f=document.getElementById("file").files[0];
+if(!f){alert("Select file");return;}
+document.getElementById("status").innerText="Converting...";
+
+const { jsPDF } = window.jspdf;
+const pdf = new jsPDF();
+const ext = f.name.split('.').pop().toLowerCase();
+
+if(ext=="txt"){
+ let t=await f.text();
+ pdf.text(t,10,10);
+}
+else if(ext=="docx"){
+ let b=await f.arrayBuffer();
+ let r=await mammoth.extractRawText({arrayBuffer:b});
+ pdf.text(r.value,10,10);
+}
+else if(ext=="xlsx"){
+ let d=new Uint8Array(await f.arrayBuffer());
+ let wb=XLSX.read(d,{type:"array"});
+ let csv=XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+ pdf.text(csv,10,10);
+}
+else if(["jpg","jpeg","png","webp"].includes(ext)){
+ let img=await new Promise(r=>{
+  let fr=new FileReader();
+  fr.onload=e=>r(e.target.result);
+  fr.readAsDataURL(f);
+ });
+ pdf.addImage(img,"JPEG",10,10,180,160);
+}
+else{
+ alert("Format not supported");
+ return;
+}
+
+pdf.save("converted.pdf");
+document.getElementById("status").innerText="Done ✔";
+}
+</script>
+
+</body>
+</html>
